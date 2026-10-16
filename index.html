@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Treino de mistura e manete, Cessna 172S (painel 3D)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" onerror="var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js';document.head.appendChild(s);"></script>
+<style>
+:root{
+  --bg:#e6ebee; --surface:#f8fafb; --ink:#17222b; --muted:#56656f; --line:#cdd6dc;
+  --accent:#1f5f8b; --ok:#1b7443; --warn:#8f6000; --bad:#b3261e; --info:#1f5f8b;
+  --okbg:#e2f1e7; --warnbg:#faefd6; --badbg:#fae3e0; --infobg:#e3eef6;
+  --cockpit:#1c1f22;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); color-scheme:light;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --bg:#0f1316; --surface:#172027; --ink:#e3e9ed; --muted:#9aa8b2; --line:#29343c; --accent:#72b2e2; --ok:#62cf8f; --warn:#e9b64c; --bad:#ff7b70; --info:#72b2e2; --okbg:#163223; --warnbg:#372b10; --badbg:#3a1a17; --infobg:#132a3a; color-scheme:dark; } }
+:root[data-theme="dark"]{ --bg:#0f1316; --surface:#172027; --ink:#e3e9ed; --muted:#9aa8b2; --line:#29343c; --accent:#72b2e2; --ok:#62cf8f; --warn:#e9b64c; --bad:#ff7b70; --info:#72b2e2; --okbg:#163223; --warnbg:#372b10; --badbg:#3a1a17; --infobg:#132a3a; color-scheme:dark; }
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Barlow",system-ui,sans-serif}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1200px;margin:0 auto;padding:16px}
+header.top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+h1{font:700 1.7rem/1.1 "Barlow Condensed",sans-serif;margin:0}
+h1 small{display:block;font:500 .95rem "Barlow",sans-serif;color:var(--muted);margin-top:2px}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--surface);padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:600}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.btn:disabled{opacity:.5;cursor:default}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:16px;align-items:start}
+@media (max-width:940px){.grid{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.card + .card{margin-top:14px}
+h2{font:700 1.25rem/1.2 "Barlow Condensed",sans-serif;margin:0 0 6px}
+h3{font:700 1.05rem/1.2 "Barlow Condensed",sans-serif;margin:12px 0 4px;color:var(--muted)}
+.muted{color:var(--muted)}
+ol.phases{list-style:none;display:flex;gap:4px;padding:0;margin:0 0 12px;counter-reset:p}
+ol.phases li{flex:1;counter-increment:p;font:600 .85rem "Barlow Condensed",sans-serif;padding:6px 4px;border-top:4px solid var(--line);color:var(--muted);text-align:center}
+ol.phases li::before{content:counter(p) " "}
+ol.phases li.done{border-color:var(--ok);color:var(--ok)}
+ol.phases li.cur{border-color:var(--accent);color:var(--ink)}
+.metar{font:500 .85rem/1.4 "IBM Plex Mono",ui-monospace,monospace;background:var(--bg);border-radius:6px;padding:8px 10px;overflow-x:auto;white-space:nowrap;margin:8px 0 10px}
+.wx{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 12px}
+.wx div{border-left:3px solid var(--line);padding-left:8px}
+.wx div.hi{border-color:var(--warn)}
+.wx b{display:block;font:700 1.25rem/1.1 "Barlow Condensed",sans-serif}
+.wx span{font-size:.8rem;color:var(--muted)}
+@media (max-width:420px){.wx{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.pa{margin-top:10px;font-size:.88rem;background:var(--bg);border-radius:8px;padding:8px 10px;line-height:1.45}
+.pa code{font:500 .82rem "IBM Plex Mono",monospace}
+.task{font-weight:600;margin:4px 0}
+.poh{margin-top:10px;font-size:.92rem;background:var(--infobg);border-radius:8px;padding:8px 10px;display:none}
+.poh.show{display:block}
+.cockpit{background:var(--cockpit);border-radius:14px;padding:10px 10px 14px;color:#e8e6df;border:1px solid #0006}
+#view{width:100%;display:block;border-radius:10px;background:#101214;touch-action:none;cursor:grab}
+.digs{display:flex;justify-content:space-around;gap:8px;margin-top:6px;font:500 .78rem "IBM Plex Mono",monospace;color:#c9d2d8;flex-wrap:wrap;min-height:1.2em}
+.strip{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin:6px 0;font:600 .95rem "Barlow Condensed",sans-serif;color:#d9dee2}
+.strip em{font-style:normal;color:#9fb0bb;font-weight:500}
+.status{margin:4px auto 8px;max-width:560px;text-align:center;font:600 1rem "Barlow Condensed",sans-serif;padding:6px 10px;border-radius:6px;background:#0007;min-height:2.1em}
+.status.ok{color:#8fe0ae}.status.warn{color:#f2c766}.status.bad{color:#ff8f86}
+.fine{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.fine div{display:flex;gap:6px;align-items:center;font:600 .8rem "Barlow Condensed",sans-serif;letter-spacing:.06em;color:#aeb8bf}
+.fine button{background:#3b4045;border:1px solid #0008;color:#e8eaec;border-radius:6px;padding:5px 9px;font-size:.8rem;cursor:pointer;touch-action:manipulation;letter-spacing:0}
+.fine button:active{background:#50565c}
+.hint{font-size:.78rem;color:#9fb0bb;text-align:center;margin-top:8px}
+.confirm{display:flex;justify-content:center;margin-top:10px}
+.confirm .btn{font-size:1.05rem;padding:10px 22px}
+.fb ul{list-style:none;padding:0;margin:8px 0 0}
+.fb li{border-radius:8px;padding:8px 10px 8px 34px;position:relative;margin-bottom:6px}
+.fb li b{display:block}
+.fb li::before{position:absolute;left:10px;top:8px;font-weight:700}
+.fb li.ok{background:var(--okbg)} .fb li.ok::before{content:"✓";color:var(--ok)}
+.fb li.warn{background:var(--warnbg)} .fb li.warn::before{content:"!";color:var(--warn)}
+.fb li.bad{background:var(--badbg)} .fb li.bad::before{content:"✗";color:var(--bad)}
+.fb li.info{background:var(--infobg)} .fb li.info::before{content:"i";color:var(--info);font-style:italic}
+.score{font:700 2rem/1 "Barlow Condensed",sans-serif}
+.fbhead{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:6px}
+.sc{text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:12px;cursor:pointer}
+.sc:hover{border-color:var(--accent)}
+.sc b{font:700 1.15rem "Barlow Condensed",sans-serif;display:block}
+.sc span{font-size:.88rem;color:var(--muted)}
+.hidden{display:none!important}
+table.sum{width:100%;border-collapse:collapse;margin-top:8px}
+table.sum td{padding:6px 4px;border-bottom:1px solid var(--line)}
+table.sum td:last-child{text-align:right;font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Mistura e manete no Cessna 172S
+      <small>Painel 3D. Procedimentos do POH (Lycoming IO-360-L2A, 180 hp). Ajuste os comandos fase a fase.</small></h1>
+    <div class="tools">
+      <button class="btn" id="bSound" aria-pressed="false">Ligar som</button>
+      <button class="btn on" id="bInstr" aria-pressed="true">Modo instrutor</button>
+      <button class="btn" id="bBlind" aria-pressed="false">Treino de ouvido</button>
+      <button class="btn" id="bAbout">Sobre o modelo</button>
+      <button class="btn" id="bMenu">Trocar cenário</button>
+    </div>
+  </header>
+
+  <section id="about" class="card hidden">
+    <h2>O que este simulador modela, e o que não modela</h2>
+    <p style="margin:0 0 6px"><b>Serve para:</b> entender por que se empobrece subindo e se enriquece descendo, como achar a melhor potência e o pico de EGT, e o que cada erro causa no motor e no desempenho. A direção e a proporção dos efeitos estão corretas.</p>
+    <p style="margin:0 0 6px"><b>De onde vêm os números:</b> potência, TAS e consumo em cruzeiro e descida, razão de subida e distâncias de decolagem são interpolados das tabelas da seção 5 do POH do 172S NAV III (2.550 lb), transcritas de uma fonte não oficial. A resposta do motor ao knob (RPM estática, EGT, CHT, comportamento rico/pobre) é um modelo físico simplificado: motor aspirado por Gagg-Ferrar, hélice de passo fixo ∝ σ·RPM³, relação combustível/ar ∝ 1/√σ. Fora das faixas das tabelas (temperaturas extremas, acima de 12.000 ft), os valores são extrapolados e o app avisa.</p>
+    <p style="margin:0 0 6px"><b>Não modela:</b> peso abaixo do máximo, vento, pista de grama, flaps além do padrão da tabela, carenagens de roda, temperatura do óleo, e o ajuste contínuo durante subida e descida (cada fase é uma foto instantânea).</p>
+    <p style="margin:0 0 6px"><b>Confira no POH da sua aeronave:</b> o arco verde do tacômetro (aqui 2.100–2.700), a RPM estática, a redação do limite de 3.000 ft (aqui altitude-pressão, como no 172S), e os valores de EGT (o indicador real não tem escala em °F). Modelos com carburador (172N/P) têm aquecimento de carburador e comportamento diferente. Elevações dos aeródromos são aproximadas.</p>
+    <p style="margin:0"><b>Som:</b> explosões sintetizadas uma a uma; falhas secas indicam mistura pobre, borbulho e perda de giro indicam mistura rica. O tom sobe e desce com o RPM real. Use o treino de ouvido para empobrecer até a RPM máxima sem olhar o tacômetro.</p>
+  </section>
+  <section id="picker" class="card">
+    <div class="pa" style="margin:0 0 12px">
+      <b>Intuito deste simulador</b><br>
+      Treinar o raciocínio de ajuste de <b>mistura</b> e <b>manete</b> do Cessna 172S nas cinco fases do voo, segundo o POH: entender por que se empobrece subindo e se enriquece descendo, como se acha a RPM máxima e o pico de EGT, e o que cada erro faz com o motor e com o desempenho. Os números de desempenho (potência, TAS, consumo, razão de subida, distância de decolagem) vêm das tabelas da seção 5 do POH, interpoladas; a resposta instantânea do motor ao knob é um modelo físico simplificado. É material de estudo da teoria, não substitui o POH da aeronave nem instrução de voo.
+    </div>
+    <h2>Escolha o cenário</h2>
+    <p class="muted" style="margin:0">Cada cenário é um voo completo em cinco fases. Os comandos permanecem onde você deixou de uma fase para a outra, como no avião.</p>
+    <div id="pickList"></div>
+  </section>
+
+  <div id="game" class="grid hidden">
+    <div>
+      <section class="card">
+        <ol class="phases" id="phList"></ol>
+        <h2 id="routeTitle"></h2>
+        <div class="metar" id="metar"></div>
+        <div class="wx" id="wx"></div>
+        <div class="pa" id="paBox"></div>
+      </section>
+      <section class="card">
+        <h2 id="phName" style="margin:0"></h2>
+        <div class="task" id="phTask"></div>
+        <div class="muted" id="phAtt" style="font-size:.92rem"></div>
+        <div class="muted" id="phSpd" style="font-size:.92rem"></div>
+        <button class="btn" id="bPoh" style="margin-top:10px">Ver checklist do POH</button>
+        <div class="poh" id="poh"></div>
+      </section>
+      <section class="card fb hidden" id="fb"></section>
+    </div>
+    <div>
+      <section class="cockpit" aria-label="Painel do motor em 3D">
+        <canvas id="view" aria-label="Painel: horizonte, tacômetro, EGT, fluxo de combustível, manete e mistura"></canvas>
+        <div class="digs" id="digs"></div>
+        <div class="strip" id="strip"></div>
+        <div class="status" id="status" aria-live="polite"></div>
+        <div class="fine">
+          <div>THROTTLE <button data-k="thr" data-d="-0.01">▲ abrir</button><button data-k="thr" data-d="0.01">▼ reduzir</button></div>
+          <div>MIXTURE <button data-k="mix" data-d="-0.004">↻ enriquecer</button><button data-k="mix" data-d="0.004">↺ empobrecer</button></div>
+        </div>
+        <div class="hint">Arraste um knob para baixo para puxá-lo e para cima para empurrá-lo. Roda do mouse sobre o knob gira o vernier. Dica de ouvido: empobreça até o tom do motor parar de subir; se começar a tossir, passou do ponto. Arraste fora dos knobs para olhar o painel de outro ângulo. Teclado: W/S na manete, ↑/↓ na mistura, Shift = curso rápido.</div>
+        <div class="confirm"><button class="btn primary" id="bConfirm">Confirmar ajuste</button></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ======================= Aeródromos (elevações aproximadas) ======================= */
+const AP={
+ SBFL:{icao:'SBFL',name:'Florianópolis',elev:16}, SBPA:{icao:'SBPA',name:'Porto Alegre',elev:11},
+ SBRJ:{icao:'SBRJ',name:'Rio, Santos Dumont',elev:11}, SBRF:{icao:'SBRF',name:'Recife',elev:33},
+ SBJP:{icao:'SBJP',name:'João Pessoa',elev:217}, SBBR:{icao:'SBBR',name:'Brasília',elev:3497},
+ SBGO:{icao:'SBGO',name:'Goiânia',elev:2450}, SBCT:{icao:'SBCT',name:'Curitiba',elev:2988},
+ SBCF:{icao:'SBCF',name:'Confins',elev:2715}, SBKP:{icao:'SBKP',name:'Campinas',elev:2170},
+ LPPT:{icao:'LPPT',name:'Lisboa',elev:374}, LPFR:{icao:'LPFR',name:'Faro',elev:24},
+ KFXE:{icao:'KFXE',name:'Fort Lauderdale Exec.',elev:13}, KEYW:{icao:'KEYW',name:'Key West',elev:3},
+ FALA:{icao:'FALA',name:'Lanseria (Joanesburgo)',elev:4517}, FAPP:{icao:'FAPP',name:'Polokwane',elev:4076},
+ KAPA:{icao:'KAPA',name:'Denver Centennial',elev:5885}, KGJT:{icao:'KGJT',name:'Grand Junction',elev:4858},
+ LECU:{icao:'LECU',name:'Madrid Cuatro Vientos',elev:2269}, LEZG:{icao:'LEZG',name:'Zaragoza',elev:863},
+ KLXV:{icao:'KLXV',name:'Leadville',elev:9934}, PAFA:{icao:'PAFA',name:'Fairbanks',elev:439},
+ PANN:{icao:'PANN',name:'Nenana',elev:362}, L06:{icao:'L06',name:'Furnace Creek (Death Valley)',elev:-210},
+ KBIH:{icao:'KBIH',name:'Bishop',elev:4124}, SPZO:{icao:'SPZO',name:'Cusco',elev:10860},
+ SPJL:{icao:'SPJL',name:'Juliaca',elev:12552}, OMDW:{icao:'OMDW',name:'Dubai Al Maktoum',elev:123},
+ OMFJ:{icao:'OMFJ',name:'Fujairah',elev:152}, EGLL:{icao:'EGLL',name:'Londres',elev:83}, LFPN:{icao:'LFPN',name:'Toussus-le-Noble',elev:538}
+};
+const SCN=[
+ {g:'Básicos',title:'Litoral em dia padrão',desc:'Nível do mar, ar ameno. Referência para os outros.',from:'SBFL',to:'SBPA',fl:55,
+  wf:{qnh:29.98,t:22,td:15,wind:'09008KT',sky:'CAVOK'},wt:{qnh:29.95,t:24,td:17,wind:'14010KT',sky:'9999 SCT035'}},
+ {g:'Básicos',title:'Lisboa, Atlântico ameno',desc:'Elevação baixa, QNH alto. Decolagem e pouso tranquilos.',from:'LPPT',to:'LPFR',fl:55,
+  wf:{qnh:30.09,t:19,td:12,wind:'33012KT',sky:'9999 FEW025'},wt:{qnh:30.06,t:23,td:16,wind:'24008KT',sky:'CAVOK'}},
+ {g:'Básicos',title:'Nordeste quente e úmido',desc:'32 °C e umidade alta ao nível do mar.',from:'SBRF',to:'SBJP',fl:45,
+  wf:{qnh:29.85,t:32,td:26,wind:'12012KT',sky:'9999 SCT020'},wt:{qnh:29.85,t:31,td:25,wind:'11010KT',sky:'9999 SCT022'}},
+ {g:'Básicos',title:'Flórida no verão',desc:'Calor e umidade, pressão normal.',from:'KFXE',to:'KEYW',fl:45,
+  wf:{qnh:30.02,t:33,td:25,wind:'10010KT',sky:'9999 SCT030'},wt:{qnh:30.00,t:31,td:26,wind:'09012KT',sky:'9999 FEW025'}},
+ {g:'Básicos',title:'Tempestade ao nível do mar',desc:'Pressão baixa, ar saturado e TS nas proximidades.',from:'SBRJ',to:'SBFL',fl:65,
+  wf:{qnh:29.62,t:25,td:24,wind:'22018G30KT',sky:'4000 VCTS RA BKN015 FEW030CB'},wt:{qnh:29.68,t:21,td:20,wind:'18015KT',sky:'6000 -RA BKN012'}},
+ {g:'Intermediários',title:'Curitiba no inverno',desc:'Frio, mas com QNH baixo: a altitude-pressão passa de 3.000 ft.',from:'SBCT',to:'SBFL',fl:75,
+  wf:{qnh:29.80,t:6,td:4,wind:'36005KT',sky:'5000 BR BKN008'},wt:{qnh:29.86,t:17,td:15,wind:'16012KT',sky:'8000 -RA BKN020'}},
+ {g:'Intermediários',title:'Serra mineira',desc:'Confins quente com QNH alto: altitude-densidade alta, altitude-pressão abaixo de 3.000 ft.',from:'SBCF',to:'SBBR',fl:95,
+  wf:{qnh:30.06,t:29,td:13,wind:'08008KT',sky:'CAVOK'},wt:{qnh:29.97,t:31,td:9,wind:'07010KT',sky:'CAVOK'}},
+ {g:'Intermediários',title:'Planalto quente: Brasília',desc:'3.497 ft com 33 °C. Ar rarefeito já na decolagem.',from:'SBBR',to:'SBGO',fl:85,
+  wf:{qnh:29.97,t:33,td:10,wind:'32006KT',sky:'9999 FEW045'},wt:{qnh:29.94,t:34,td:12,wind:'30008KT',sky:'9999 FEW050'}},
+ {g:'Intermediários',title:'Madrid no verão',desc:'2.269 ft, 38 °C e ar seco.',from:'LECU',to:'LEZG',fl:75,
+  wf:{qnh:30.00,t:38,td:4,wind:'22008KT',sky:'CAVOK'},wt:{qnh:29.97,t:36,td:8,wind:'30014KT',sky:'9999 FEW060'}},
+ {g:'Intermediários',title:'Highveld sul-africano',desc:'Lanseria a 4.517 ft em tarde quente.',from:'FALA',to:'FAPP',fl:95,
+  wf:{qnh:30.03,t:30,td:8,wind:'03010KT',sky:'9999 FEW040'},wt:{qnh:30.00,t:32,td:6,wind:'04012KT',sky:'CAVOK'}},
+ {g:'Intermediários',title:'Denver no verão',desc:'5.885 ft com 34 °C: altitude-densidade perto de 9.000 ft.',from:'KAPA',to:'KGJT',fl:105,
+  wf:{qnh:30.05,t:34,td:3,wind:'17010KT',sky:'9999 FEW080'},wt:{qnh:29.99,t:36,td:2,wind:'27008KT',sky:'CAVOK'}},
+ {g:'Extremos',title:'Fairbanks, −35 °C',desc:'Ar denso e pressão alta: altitude-pressão negativa e muito oxigênio.',from:'PAFA',to:'PANN',fl:45,
+  wf:{qnh:30.62,t:-35,td:-39,wind:'00000KT',sky:'3000 BR SKC'},wt:{qnh:30.58,t:-33,td:-37,wind:'00000KT',sky:'9999 SKC'}},
+ {g:'Extremos',title:'Vale da Morte, 46 °C',desc:'Pista abaixo do nível do mar, mas altitude-densidade de ~3.000 ft.',from:'L06',to:'KBIH',fl:85,
+  wf:{qnh:29.80,t:46,td:-2,wind:'18006KT',sky:'CAVOK'},wt:{qnh:29.92,t:37,td:-6,wind:'33010KT',sky:'CAVOK'}},
+ {g:'Extremos',title:'Golfo Pérsico, 44 °C úmido',desc:'Calor e umidade altíssimos ao nível do mar.',from:'OMDW',to:'OMFJ',fl:55,
+  wf:{qnh:29.71,t:44,td:29,wind:'31010KT',sky:'4000 HZ NSC'},wt:{qnh:29.73,t:41,td:30,wind:'14008KT',sky:'5000 HZ NSC'}},
+ {g:'Extremos',title:'Leadville, a pista mais alta dos EUA',desc:'9.934 ft em dia de verão. Decolagem marginal para um 172.',from:'KLXV',to:'KAPA',fl:125,
+  wf:{qnh:30.20,t:25,td:1,wind:'16008KT',sky:'9999 FEW090'},wt:{qnh:30.08,t:30,td:5,wind:'18010KT',sky:'CAVOK'}},
+ {g:'Extremos',title:'Andes: Cusco para Juliaca',desc:'Ambos acima de 10.000 ft. Perto do teto do avião.',from:'SPZO',to:'SPJL',fl:145,
+  wf:{qnh:30.25,t:18,td:5,wind:'05008KT',sky:'9999 FEW060'},wt:{qnh:30.18,t:16,td:2,wind:'08010KT',sky:'9999 SCT070'}},
+ {g:'Extremos',title:'Frente fria sobre Londres',desc:'Pressão muito baixa (QNH 28,94): a altitude-pressão sobe ~1.000 ft sem sair do chão.',from:'EGLL',to:'LFPN',fl:55,
+  wf:{qnh:28.94,t:9,td:8,wind:'24025G38KT',sky:'3000 RA BKN008'},wt:{qnh:29.20,t:11,td:9,wind:'25018KT',sky:'5000 -RA BKN015'}},
+ {g:'Aleatório',title:'Aleatório',desc:'Aeródromos e meteorologia sorteados, do Alasca aos Andes.',random:true}
+];
+const PH=[
+ {key:'dec',name:'Decolagem',k:1.48,air:false,pitch:0,
+  task:'Na cabeceira, com potência máxima estática. Ajuste a manete e a mistura para decolar.',
+  att:'Arfagem: 0° na corrida; +7° a +10° na rotação',spd:'Rotação a 55 KIAS; subida inicial a 70–80 KIAS',
+  poh:'<b>Normal Takeoff</b>: Wing Flaps UP–10°; Throttle FULL; Mixture RICH (acima de 3.000 ft de altitude-pressão, empobrecer para RPM máxima); levantar a roda do nariz a 55 KIAS; Climb Speed 70–80 KIAS.'},
+ {key:'sub',name:'Subida',k:1.25,air:true,pitch:7,
+  task:'Subida em rota com potência máxima contínua. A mistura precisa acompanhar a altitude.',
+  att:'Arfagem: ~+7°',spd:'Vy 74 KIAS ao nível do mar (72 KIAS a 10.000 ft); em rota, 75–85 KIAS',
+  poh:'<b>Enroute Climb</b>: Airspeed 75–85 KIAS; Throttle FULL; Mixture RICH (acima de 3.000 ft de altitude-pressão, empobrecer para RPM máxima).'},
+ {key:'cru',name:'Cruzeiro',k:0.92,air:true,pitch:1,
+  task:'Nivelado. Reduza para potência de cruzeiro e empobreça a mistura corretamente.',
+  att:'Arfagem: ~0° a +2°, compensado',spd:'RPM dentro do arco verde (2.100–2.700)',
+  poh:'<b>Cruise</b>: Power 2.100–2.700 RPM (recomendado não mais que 75%); Mixture LEAN: empobrecer até o pico de EGT e então enriquecer ~50 °F (<i>Recommended Lean</i>). <i>Best Economy</i>: no pico de EGT. Acima de 75%, apenas melhor potência.'},
+ {key:'des',name:'Descida',k:0.85,air:true,pitch:-1,
+  task:'Descendo para o destino. O ar fica mais denso a cada pé: reajuste a potência e a mistura.',
+  att:'Arfagem: ~−1° a −2° (rampa de ~2,5°, cerca de 500 ft/min)',spd:'Em ar turbulento, abaixo de VNO (129 KIAS)',
+  poh:'<b>Descent</b>: Power AS DESIRED; Mixture ADJUST para funcionamento suave (FULL RICH em marcha lenta), enriquecendo conforme desce.'},
+ {key:'pou',name:'Pouso',k:1.08,air:true,pitch:-1,
+  task:'Final curta. Configure o motor para o pouso e para uma possível arremetida.',
+  att:'Arfagem: ~0° a −2° na rampa de 3°; o nariz sobe no arredondamento (flare)',spd:'60–70 KIAS com flaps FULL (65–75 KIAS com flaps UP)',
+  poh:'<b>Before Landing</b>: Mixture RICH. <b>Normal Landing</b>: 65–75 KIAS flaps UP; flaps conforme necessário; 60–70 KIAS flaps FULL. <b>Balked Landing</b>: Throttle FULL.'}
+];
+
+
+/* ======================= Tabelas de desempenho (seção 5 do POH 172S NAV III, 2.550 lb) =======================
+   Transcrição de fonte não oficial (jhchou.github.io/c172s_performance). Cruzeiro: mistura "recommended lean";
+   subida: Vy, manete toda, mistura conforme POH; decolagem: pista curta, flaps 10°. Fora da faixa, extrapolação linear. */
+const CRUISE={
+ '-20':{2000:[[2550,83,117,11.1],[2500,78,115,10.6],[2400,69,111,9.6],[2300,61,105,8.6],[2200,53,99,7.7],[2100,47,92,6.9]],
+        4000:[[2600,83,120,11.1],[2550,79,118,10.6],[2500,74,115,10.1],[2400,65,110,9.1],[2300,58,104,8.2],[2200,51,98,7.4],[2100,45,91,6.6]],
+        6000:[[2650,83,122,11.1],[2600,78,120,10.6],[2500,70,115,9.6],[2400,62,109,8.6],[2300,54,103,7.8],[2200,48,96,7.1]],
+        8000:[[2700,83,125,11.1],[2650,78,122,10.5],[2600,74,120,10],[2500,65,114,9.1],[2400,58,108,8.2],[2300,52,101,7.5],[2200,46,94,6.8]],
+        10000:[[2700,78,124,10.5],[2650,73,122,10],[2600,69,119,9.5],[2500,62,113,8.7],[2400,55,106,7.9],[2300,49,100,7.2]],
+        12000:[[2650,69,121,9.5],[2600,65,118,9.1],[2500,58,111,8.3],[2400,52,105,7.5],[2300,47,98,6.9]]},
+ '0':{2000:[[2550,77,118,10.5],[2500,73,115,9.9],[2400,64,110,9],[2300,57,104,8.1],[2200,50,97,7.3],[2100,44,90,6.6]],
+      4000:[[2600,77,120,10.4],[2550,73,117,9.9],[2500,69,115,9.5],[2400,61,109,8.5],[2300,54,102,7.7],[2200,48,96,7],[2100,42,89,6.4]],
+      6000:[[2650,77,122,10.4],[2600,73,119,9.9],[2500,65,114,9],[2400,57,108,8.2],[2300,51,101,7.4],[2200,45,94,6.7]],
+      8000:[[2700,77,124,10.4],[2650,72,122,9.9],[2600,68,119,9.4],[2500,61,112,8.6],[2400,54,106,7.8],[2300,48,99,7.1],[2200,43,92,6.5]],
+      10000:[[2700,72,123,9.8],[2650,68,120,9.4],[2600,64,117,9],[2500,57,111,8.2],[2400,51,104,7.5],[2300,46,97,6.8]],
+      12000:[[2650,64,119,8.9],[2600,61,116,8.5],[2500,54,109,7.8],[2400,49,102,7.1],[2300,44,95,6.6]]},
+ '20':{2000:[[2550,72,117,9.9],[2500,68,115,9.4],[2400,60,109,8.5],[2300,53,102,7.7],[2200,47,95,6.9],[2100,42,89,6.3]],
+       4000:[[2600,72,119,9.8],[2550,68,117,9.4],[2500,64,114,8.9],[2400,57,107,8.1],[2300,51,101,7.3],[2200,45,94,6.7],[2100,40,87,6.1]],
+       6000:[[2650,72,121,9.8],[2600,68,118,9.4],[2500,60,112,8.5],[2400,54,106,7.7],[2300,48,99,7],[2200,43,92,6.4]],
+       8000:[[2700,71,123,9.7],[2650,67,120,9.3],[2600,64,117,8.9],[2500,57,111,8.1],[2400,51,104,7.4],[2300,46,97,6.8],[2200,41,90,6.2]],
+       10000:[[2700,67,122,9.3],[2650,63,119,8.9],[2600,60,115,8.5],[2500,54,109,7.8],[2400,49,102,7.1],[2300,44,95,6.5]],
+       12000:[[2650,60,117,8.5],[2600,57,114,8.1],[2500,51,107,7.4],[2400,46,100,6.8],[2300,41,92,6.3]]}
+};
+const CLIMB={alts:[0,2000,4000,6000,8000,10000,12000],temps:[-20,0,20,40],
+ roc:[[855,785,710,645],[760,695,625,560],[685,620,555,495],[575,515,450,390],[465,405,345,285],[360,300,240,180],[255,195,135,75]]};
+const TAKEOFF={alts:[0,1000,2000,3000,4000,5000,6000,7000,8000],temps:[0,10,20,30,40],
+ roll:[[860,925,995,1070,1150],[940,1010,1090,1170,1260],[1025,1110,1195,1285,1380],[1125,1215,1310,1410,1515],[1235,1335,1440,1550,1660],[1355,1465,1585,1705,1825],[1495,1615,1745,1875,2010],[1645,1785,1920,2065,2215],[1820,1970,2120,2280,2450]],
+ fifty:[[1465,1575,1690,1810,1945],[1600,1720,1850,1990,2135],[1755,1890,2035,2190,2355],[1925,2080,2240,2420,2605],[2120,2295,2480,2685,2880],[2345,2545,2755,2975,3205],[2605,2830,3075,3320,3585],[2910,3170,3440,3730,4045],[3265,3575,3880,4225,4615]]};
+/* interpolação linear com extrapolação nas pontas */
+function lerpX(xs,ys,x){
+  if(x<=xs[0]){const m=(ys[1]-ys[0])/(xs[1]-xs[0]);return ys[0]+m*(x-xs[0]);}
+  const n=xs.length-1;
+  if(x>=xs[n]){const m=(ys[n]-ys[n-1])/(xs[n]-xs[n-1]);return ys[n]+m*(x-xs[n]);}
+  for(let i=0;i<n;i++)if(x>=xs[i]&&x<=xs[i+1]){const f=(x-xs[i])/(xs[i+1]-xs[i]);return ys[i]+f*(ys[i+1]-ys[i]);}
+  return ys[n];
+}
+function cruiseAt(tempKey,alt,rpm){
+  const rows=CRUISE[tempKey][alt].slice().sort((a,b)=>a[0]-b[0]);
+  const xs=rows.map(r=>r[0]);
+  return [1,2,3].map(j=>lerpX(xs,rows.map(r=>r[j]),rpm));
+}
+function cruiseT(PA,rpm,dISA){
+  const alts=[2000,4000,6000,8000,10000,12000];
+  const byT=['-20','0','20'].map(tk=>{const vals=alts.map(a=>cruiseAt(tk,a,rpm));return [0,1,2].map(j=>lerpX(alts,vals.map(v=>v[j]),PA));});
+  const d=Math.max(-35,Math.min(35,dISA));
+  const out=[0,1,2].map(j=>lerpX([-20,0,20],byT.map(v=>v[j]),d));
+  return {pwr:Math.max(3,out[0]),ktas:Math.max(40,out[1]),gph:Math.max(0.6,out[2])};
+}
+function climbT(PA,oat){   /* colunas da tabela de subida são OAT em °C (−20, 0, 20, 40), não desvio ISA */
+  const d=Math.max(-45,Math.min(50,oat));
+  const byA=CLIMB.alts.map((a,i)=>lerpX(CLIMB.temps,CLIMB.roc[i],d));
+  return lerpX(CLIMB.alts,byA,Math.max(-2000,PA));
+}
+function takeoffT(PA,oat){
+  const o=Math.max(-40,Math.min(50,oat));
+  const r=TAKEOFF.alts.map((a,i)=>lerpX(TAKEOFF.temps,TAKEOFF.roll[i],o));
+  const f=TAKEOFF.alts.map((a,i)=>lerpX(TAKEOFF.temps,TAKEOFF.fifty[i],o));
+  return {roll:Math.max(300,lerpX(TAKEOFF.alts,r,PA)),fifty:Math.max(500,lerpX(TAKEOFF.alts,f,PA))};
+}
+
+/* ======================= Física ======================= */
+const satVP=t=>6.1078*Math.pow(10,7.5*t/(237.3+t));
+/* Altitude-pressão exata: PA = elev + 145.366 × (1 − (QNH/29,92126)^0,190284). A regra prática (29,92 − QNH) × 1.000 ft é uma aproximação linear. */
+const paCorr=set=>145366.45*(1-Math.pow(set/29.92126,0.190284));
+function atmo(alt,set,oat,td){
+  const PA=alt+paCorr(set);
+  const P=1013.25*Math.pow(1-6.8756e-6*PA,5.2559);
+  const T=oat+273.15, e=Math.min(satVP(td),P*0.99);
+  const rhoD=(P-e)*100/(287.05*T), rho=rhoD+e*100/(461.5*T), rhoDry=P*100/(287.05*T);
+  const DA=145442.16*(1-Math.pow(rho/1.225,0.235));
+  const DAdry=145442.16*(1-Math.pow(rhoDry/1.225,0.235));
+  return {PA,P,sO2:rhoD/1.225,sT:rho/1.225,DA,DAdry,isa:15-1.98*PA/1000,RH:Math.min(100,e/satVP(oat)*100),paRule:(29.92-set)*1000};
+}
+/* Modelo do motor:
+   - Potência disponível de motor aspirado: 180 hp × (1,132·σ − 0,132) (Gagg-Ferrar), σ = densidade do ar seco / 1,225 kg/m³.
+   - Hélice de passo fixo absorve potência ∝ σ·RPM³·k; k depende da velocidade (alto na estática, baixo na descida).
+   - Servo de injeção (Bendix RSA) mede o ar por pressão de impacto (∝ ρV²), então o combustível cresce com √ρ
+     enquanto a massa de ar cresce com ρ: a relação combustível/ar fica ∝ 1/√σ. Por isso, sem mexer no knob,
+     a mistura enriquece conforme sobe e empobrece conforme desce.
+   - R = relação combustível/ar normalizada (1 = FULL RICH ao nível do mar ISA):
+     ≈0,875 melhor potência (RPM máx.) | ≈0,773 pico de EGT | <0,72 áspero | <0,56 corte. */
+function eng(c,t,pull,ph){
+  const m=Math.max(0,1-pull), R=m/Math.sqrt(c.sO2);
+  const avail=Math.max(0.03,1.132*c.sO2-0.132);
+  const thr=0.03+0.97*Math.pow(Math.min(1,Math.max(0,t)),1.3);
+  const alive=R>=0.56;
+  let mf=0;
+  if(alive){mf=R<0.875?1-6*(0.875-R)**2:1-1.6*(R-0.875)**2; mf=Math.max(0.05,mf);}
+  const HPb=180*avail*thr, HP=HPb*mf;
+  const rpm=alive?2700*Math.cbrt(HP/(180*c.sT*ph.k)):(ph.air?950:0);
+  const pk=1000+460*Math.sqrt(HPb/180);
+  const egt=alive?(R>=0.773?pk-1100*(R-0.773):pk-1800*(0.773-R)):420;
+  const hiPow=HP/180>0.75, det=alive&&hiPow&&R<0.84;   /* detonação: potência alta (>75%) com mistura pobre da melhor potência */
+  let cht=alive?250+160*(HPb/180)+1.3*(c.oat-15)+(ph.key==='dec'||ph.key==='sub'?15:0)-650*(R-0.83)**2:220;
+  if(det) cht+=(0.84-R)*600;
+  const ff=alive?0.4+0.47*(R/0.875)*HPb/6:0;
+  let rough=0;
+  if(alive){ if(R<0.72) rough=Math.min(1,(0.72-R)/0.16); else if(R>1.2) rough=Math.min(0.8,(R-1.2)/0.4); }
+  let pct=HP/180,ffOut=ff,tasT=null;
+  if(ph.key==='cru'||ph.key==='des'||ph.key==='pou'){
+    /* Fases niveladas/descida: potência, TAS e consumo saem da tabela de cruzeiro do POH para o RPM atual,
+       corrigidos pela mistura (tabela = recommended lean, R≈0,82) */
+    const T=cruiseT(c.PA,rpm,c.oat-c.isa),mfRef=1-6*(0.875-0.82)**2,rel=alive?mf/mfRef:0;
+    pct=T.pwr/100*rel; tasT=T.ktas*Math.cbrt(Math.max(0.05,rel)); ffOut=alive?Math.max(0.6,T.gph*(R/0.82)):0;
+  }
+  return {m,R,HP,HPb,rpm,egt,cht,ff:ffOut,rough,alive,pct,det,rop:1100*(R-0.773),tasT,hiPow:pct>0.75};
+}
+/* Razão de subida: tabela do POH (Vy, manete toda, mistura conforme POH) mais/menos o excesso de potência
+   em relação ao ajuste correto (≈1.300 ft/min por 100% de potência, 2.550 lb) */
+function roc(s,c,ph){
+  const leanPull=Math.max(0,1-0.875*Math.sqrt(c.sO2));
+  const corr=c.PA<=3000?eng(c,1,0,ph):eng(c,1,leanPull,ph);
+  return Math.round(climbT(c.PA,c.oat)+1300*(s.HP-corr.HP)/180);
+}
+const tas=(s,c)=>s.tasT!=null?s.tasT:126*Math.cbrt(Math.max(0.01,s.pct)/c.sT);
+
+/* ======================= Estado ======================= */
+let sc=null, pi=0, cond=null, thrPull=1, mixPull=0, scores=[], confirmed=false, instr=true, blind=false;
+let rpmD=0, egtD=900, ffD=0, peak=0, vern=0;
+const $=s=>document.querySelector(s);
+const fmt=(n,d=0)=>Number(n).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const r500=x=>Math.round(x/500)*500, r10=x=>Math.round(x/10)*10;
+const tVal=()=>1-thrPull;
+const inhg=v=>v.toFixed(2).replace('.',',');
+
+function buildCond(){
+  const O=AP[sc.from], D=AP[sc.to], wf=sc.wf, wt=sc.wt, cr=sc.fl*100, k=PH[pi].key;
+  let alt,set,oat,td,ap,w,altLabel;
+  const lapse=(w,from,a)=>{const d=(a-from)/1000;const T=Math.round(w.t-2*d);return [T,Math.min(T,Math.round(w.td-0.5*d))];};
+  if(k==='dec'){alt=O.elev;set=wf.qnh;[oat,td]=[wf.t,wf.td];ap=O;w=wf;altLabel='Elevação do aeródromo';}
+  else if(k==='sub'){alt=Math.max(O.elev+1000,r500(O.elev+0.6*(cr-O.elev)));set=wf.qnh;[oat,td]=lapse(wf,O.elev,alt);ap=O;w=wf;altLabel='Passando, altímetro no QNH';}
+  else if(k==='cru'){alt=cr;set=29.92;[oat,td]=lapse(wf,O.elev,alt);ap=O;w=wf;altLabel='FL'+String(sc.fl).padStart(3,'0')+', altímetro em 29,92';}
+  else if(k==='des'){alt=Math.max(D.elev+1500,r500(D.elev+0.5*(cr-D.elev)));set=wt.qnh;[oat,td]=lapse(wt,D.elev,alt);ap=D;w=wt;altLabel='Passando, QNH do destino';}
+  else {alt=D.elev+500;set=wt.qnh;[oat,td]=lapse(wt,D.elev,alt);ap=D;w=wt;altLabel='Final, 500 ft acima da pista';}
+  const a=atmo(alt,set,oat,td);
+  const hpa=Math.round(w.qnh*33.8639);
+  const tt=v=>(v<0?'M':'')+String(Math.abs(v)).padStart(2,'0');
+  const metar=`METAR ${ap.icao} 161800Z ${w.wind} ${w.sky} ${tt(w.t)}/${tt(w.td)} Q${hpa} (A${Math.round(w.qnh*100)})=`;
+  return Object.assign(a,{alt,set,oat,td,ap,metar,altLabel,storm:/TS|CB/.test(w.sky),fieldElev:ap.elev});
+}
+function randomScenario(){
+  const keys=Object.keys(AP); const pick=()=>keys[Math.floor(Math.random()*keys.length)];
+  let f=pick(),t=pick(); while(t===f)t=pick();
+  const rnd=(a,b)=>a+Math.random()*(b-a);
+  const mk=(ap)=>{
+    if(Math.random()<0.25){const T=Math.round(rnd(21,28)-AP[ap].elev/1000);return {qnh:+rnd(29.45,29.70).toFixed(2),t:T,td:T-Math.round(rnd(0,2)),wind:'2'+Math.floor(rnd(0,9))+'0'+Math.round(rnd(15,22))+'G'+Math.round(rnd(28,38))+'KT',sky:'3000 +TSRA BKN012 FEW025CB'};}
+    const T=Math.round(rnd(-20,38)-AP[ap].elev/1500);return {qnh:+rnd(29.70,30.40).toFixed(2),t:T,td:T-Math.round(rnd(2,20)),wind:'1'+Math.floor(rnd(0,9))+'0'+String(Math.round(rnd(3,14))).padStart(2,'0')+'KT',sky:Math.random()<0.5?'CAVOK':'9999 SCT0'+Math.round(rnd(20,45))};
+  };
+  const minFl=Math.ceil((Math.max(AP[f].elev,AP[t].elev)+2500)/1000)*10+5;
+  const fl=Math.min(145,Math.max(minFl,[45,55,65,75,85,95,105][Math.floor(Math.random()*7)]));
+  return {title:'Aleatório',from:f,to:t,fl,wf:mk(f),wt:mk(t)};
+}
+
+/* ======================= Instrumentos em canvas (texturas) ======================= */
+function drawGauge(ctx,o,v,mark){
+  const S=256,cx=128,cy=128,a0=135,sw=270,cl=x=>Math.max(o.min,Math.min(o.max,x));
+  const ang=x=>(a0+sw*(cl(x)-o.min)/(o.max-o.min))*Math.PI/180;
+  ctx.clearRect(0,0,S,S);
+  ctx.fillStyle='#0c0e10';ctx.beginPath();ctx.arc(cx,cy,124,0,7);ctx.fill();
+  (o.arcs||[]).forEach(([v1,v2,col])=>{ctx.strokeStyle=col;ctx.lineWidth=9;ctx.beginPath();ctx.arc(cx,cy,100,ang(v1),ang(v2));ctx.stroke();});
+  ctx.strokeStyle='#ece9e1';ctx.fillStyle='#ece9e1';ctx.textAlign='center';ctx.font='600 19px "Barlow Condensed",sans-serif';
+  for(let x=o.min;x<=o.max+1e-9;x+=o.minor){
+    const a=ang(x),maj=Math.abs((x-o.min)/o.major-Math.round((x-o.min)/o.major))<1e-6;
+    const r1=maj?84:92;ctx.lineWidth=maj?3:1.3;ctx.beginPath();ctx.moveTo(cx+r1*Math.cos(a),cy+r1*Math.sin(a));ctx.lineTo(cx+106*Math.cos(a),cy+106*Math.sin(a));ctx.stroke();
+    if(maj&&o.lab)ctx.fillText(o.lab(x),cx+68*Math.cos(a),cy+68*Math.sin(a)+7);
+  }
+  if(o.red){const a=ang(o.red);ctx.strokeStyle='#e5352a';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(cx+80*Math.cos(a),cy+80*Math.sin(a));ctx.lineTo(cx+110*Math.cos(a),cy+110*Math.sin(a));ctx.stroke();}
+  ctx.fillStyle='#ece9e1';ctx.font='700 20px "Barlow Condensed",sans-serif';ctx.fillText(o.title,cx,170);
+  if(o.sub){ctx.fillStyle='#a9b3ba';ctx.font='15px "Barlow Condensed",sans-serif';ctx.fillText(o.sub,cx,190);}
+  if(mark!=null){const a=ang(mark);ctx.fillStyle='#f2b33d';ctx.beginPath();ctx.moveTo(cx+112*Math.cos(a),cy+112*Math.sin(a));ctx.lineTo(cx+124*Math.cos(a-0.06),cy+124*Math.sin(a-0.06));ctx.lineTo(cx+124*Math.cos(a+0.06),cy+124*Math.sin(a+0.06));ctx.fill();}
+  const a=ang(v);ctx.fillStyle='#f4f3ee';ctx.beginPath();
+  ctx.moveTo(cx-16*Math.cos(a)+5*Math.sin(a),cy-16*Math.sin(a)-5*Math.cos(a));ctx.lineTo(cx+100*Math.cos(a),cy+100*Math.sin(a));ctx.lineTo(cx-16*Math.cos(a)-5*Math.sin(a),cy-16*Math.sin(a)+5*Math.cos(a));ctx.fill();
+  ctx.fillStyle='#2a2d30';ctx.strokeStyle='#777';ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx,cy,10,0,7);ctx.fill();ctx.stroke();
+}
+function drawAtt(ctx,p){
+  const S=256,cx=128,cy=128,y=cy+p*6;
+  ctx.clearRect(0,0,S,S);ctx.save();ctx.beginPath();ctx.arc(cx,cy,124,0,7);ctx.clip();
+  ctx.fillStyle='#3d86c6';ctx.fillRect(0,-200,S,y+200);ctx.fillStyle='#7a5130';ctx.fillRect(0,y,S,400);
+  ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(S,y);ctx.stroke();
+  ctx.lineWidth=2;ctx.font='14px Barlow';ctx.fillStyle='#fff';ctx.textAlign='center';
+  [-20,-15,-10,-5,5,10,15,20].forEach(d=>{const w=d%10?22:42,yy=y-d*6;ctx.beginPath();ctx.moveTo(cx-w,yy);ctx.lineTo(cx+w,yy);ctx.stroke();if(!(d%10)){ctx.fillText(Math.abs(d),cx-w-14,yy+5);ctx.fillText(Math.abs(d),cx+w+14,yy+5);}});
+  ctx.restore();
+  ctx.strokeStyle='#f2b33d';ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(40,cy);ctx.lineTo(100,cy);ctx.lineTo(114,cy+14);ctx.lineTo(128,cy);ctx.lineTo(142,cy+14);ctx.lineTo(156,cy);ctx.lineTo(216,cy);ctx.stroke();
+  ctx.fillStyle='#f2b33d';ctx.beginPath();ctx.arc(cx,cy,5,0,7);ctx.fill();
+}
+const GCFG={
+ tach:{min:0,max:3500,minor:100,major:500,lab:v=>v/100,arcs:[[2100,2700,'#2e9e4f']],red:2700,title:'RPM',sub:'×100'},
+ egt:{min:1000,max:1600,minor:25,major:100,arcs:[],title:'EGT',sub:'25 °F por traço'},
+ ff:{min:0,max:20,minor:1,major:5,lab:v=>v,arcs:[],title:'FUEL FLOW',sub:'GPH'}
+};
+
+/* ======================= Painel 3D ======================= */
+const V={};
+function setup3D(){
+  const canvas=$('#view');
+  V.renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+  V.renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
+  V.scene=new THREE.Scene();V.scene.background=new THREE.Color(0x101214);
+  V.camera=new THREE.PerspectiveCamera(36,1.6,0.1,50);
+  V.orbit={yaw:0.12,pitch:0.22,dist:3.1,tgt:new THREE.Vector3(0,-0.05,0)};
+  V.scene.add(new THREE.AmbientLight(0x9fb0c0,0.55));
+  const dl=new THREE.DirectionalLight(0xfff2e0,0.9);dl.position.set(1.5,2.5,3);V.scene.add(dl);
+  const pl=new THREE.PointLight(0xffd9a6,0.5,8);pl.position.set(-0.6,0.9,1.6);V.scene.add(pl);
+  const g=new THREE.Group();g.rotation.x=-0.22;V.scene.add(g);V.panel=g;
+  // painel e glareshield
+  const panelMat=new THREE.MeshStandardMaterial({color:0x2a2e32,roughness:0.92,metalness:0.08});
+  const panel=new THREE.Mesh(new THREE.BoxGeometry(3.4,1.75,0.08),panelMat);g.add(panel);
+  const glare=new THREE.Mesh(new THREE.BoxGeometry(3.6,0.08,0.5),new THREE.MeshStandardMaterial({color:0x17191b,roughness:1}));glare.position.set(0,0.9,0.22);g.add(glare);
+  const lower=new THREE.Mesh(new THREE.BoxGeometry(3.4,0.12,0.42),new THREE.MeshStandardMaterial({color:0x202326,roughness:1}));lower.position.set(0,-0.9,0.17);g.add(lower);
+  // instrumentos
+  const mkGauge=(x,y,draw)=>{
+    const c=document.createElement('canvas');c.width=c.height=256;const ctx=c.getContext('2d');
+    const tex=new THREE.CanvasTexture(c);
+    const bez=new THREE.Mesh(new THREE.TorusGeometry(0.285,0.025,12,48),new THREE.MeshStandardMaterial({color:0x3a3f44,roughness:0.5,metalness:0.4}));bez.position.set(x,y,0.05);g.add(bez);
+    const face=new THREE.Mesh(new THREE.CircleGeometry(0.275,48),new THREE.MeshBasicMaterial({map:tex}));face.position.set(x,y,0.043);g.add(face);
+    const glass=new THREE.Mesh(new THREE.CircleGeometry(0.275,48),new THREE.MeshPhysicalMaterial({color:0xffffff,transparent:true,opacity:0.08,roughness:0.1,metalness:0}));glass.position.set(x,y,0.062);g.add(glass);
+    return {ctx,tex,draw};
+  };
+  V.gAtt=mkGauge(-1.15,0.3);V.gTach=mkGauge(-0.38,0.3);V.gEgt=mkGauge(0.38,0.3);V.gFf=mkGauge(1.15,0.3);
+  // placa com nome do avião
+  const lab=(txt,x,y,w,size)=>{const c=document.createElement('canvas');c.width=512;c.height=96;const cx=c.getContext('2d');cx.fillStyle='#ece9e1';cx.font='700 '+size+'px "Barlow Condensed",sans-serif';cx.textAlign='center';cx.fillText(txt,256,66);
+    const m=new THREE.Mesh(new THREE.PlaneGeometry(w,w*96/512),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true}));m.position.set(x,y,0.045);g.add(m);};
+  lab('THROTTLE',-0.32,-0.18,0.5,60);lab('MIXTURE',0.32,-0.18,0.5,60);lab('PUSH FULL / PULL IDLE',-0.32,-0.76,0.5,40);lab('PUSH RICH / PULL IDLE CUT OFF',0.32,-0.76,0.62,40);
+  lab('CESSNA 172S',1.15,-0.5,0.7,54);
+  // knobs
+  const mkKnob=(x,kind)=>{
+    const grp=new THREE.Group();grp.position.set(x,-0.47,0.04);g.add(grp);
+    const ring=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,0.03,24),new THREE.MeshStandardMaterial({color:0x6a7075,metalness:0.7,roughness:0.35}));ring.rotation.x=Math.PI/2;grp.add(ring);
+    const shaft=new THREE.Mesh(new THREE.CylinderGeometry(0.028,0.028,1,20),new THREE.MeshStandardMaterial({color:0xcfd3d6,metalness:0.9,roughness:0.25}));shaft.rotation.x=Math.PI/2;grp.add(shaft);
+    const head=new THREE.Group();grp.add(head);
+    let mat;
+    if(kind==='mix'){
+      const c=document.createElement('canvas');c.width=512;c.height=64;const cx=c.getContext('2d');
+      for(let i=0;i<64;i++){cx.fillStyle=i%2?'#8c0d14':'#cf1a22';cx.fillRect(i*8,0,8,64);}
+      const tex=new THREE.CanvasTexture(c);tex.wrapS=THREE.RepeatWrapping;
+      mat=new THREE.MeshStandardMaterial({map:tex,roughness:0.7});
+      const btn=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,0.05,20),new THREE.MeshStandardMaterial({color:0x8d9398,metalness:0.6,roughness:0.4}));btn.rotation.x=Math.PI/2;btn.position.z=0.1;head.add(btn);
+    } else mat=new THREE.MeshStandardMaterial({color:0x111214,roughness:0.45,metalness:0.1});
+    const hg=kind==='mix'?new THREE.CylinderGeometry(0.11,0.105,0.16,32):new THREE.CylinderGeometry(0.115,0.1,0.17,32);
+    const hm=new THREE.Mesh(hg,mat);hm.rotation.x=Math.PI/2;head.add(hm);
+    const cap=new THREE.Mesh(new THREE.CircleGeometry(kind==='mix'?0.11:0.115,32),new THREE.MeshStandardMaterial({color:kind==='mix'?0xa8121a:0x1a1b1d,roughness:0.5}));cap.position.z=0.085;head.add(cap);
+    [hm,cap,...head.children].forEach(o=>o.userData.knob=kind);
+    return {grp,shaft,head};
+  };
+  V.thr=mkKnob(-0.32,'thr');V.mix=mkKnob(0.32,'mix');
+  V.ray=new THREE.Raycaster();V.mouse=new THREE.Vector2();
+  resize3D();
+  window.addEventListener('resize',resize3D);
+  bindPointer(canvas);
+}
+function resize3D(){
+  const canvas=$('#view'),w=canvas.clientWidth||600,h=Math.max(300,Math.round(w*0.62));
+  V.renderer.setSize(w,h,false);V.camera.aspect=w/h;V.camera.updateProjectionMatrix();
+}
+function knobsUpdate(){
+  const place=(k,pull)=>{const ext=0.1+pull*0.55;k.head.position.z=ext;k.shaft.position.z=ext/2;k.shaft.scale.y=ext;};
+  place(V.thr,thrPull);place(V.mix,mixPull);V.mix.head.rotation.z=vern;
+}
+function render3D(s,shake){
+  const o=V.orbit, cam=V.camera;
+  cam.position.set(o.tgt.x+o.dist*Math.sin(o.yaw)*Math.cos(o.pitch),o.tgt.y+o.dist*Math.sin(o.pitch),o.tgt.z+o.dist*Math.cos(o.yaw)*Math.cos(o.pitch));
+  cam.lookAt(o.tgt);
+  const vib=(s?s.rough*0.01:0)+(s&&s.alive?0.0015*(rpmD/2700):0);
+  V.panel.rotation.x=-0.22+(Math.random()-0.5)*vib;V.panel.position.y=(Math.random()-0.5)*vib;
+  drawAtt(V.gAtt.ctx,PH[pi].pitch);V.gAtt.tex.needsUpdate=true;
+  if(blind&&!confirmed){[V.gTach,V.gEgt,V.gFf].forEach(g=>{const c=g.ctx;c.clearRect(0,0,256,256);c.fillStyle='#2b2e31';c.beginPath();c.arc(128,128,124,0,7);c.fill();c.fillStyle='#8c969d';c.font='700 24px "Barlow Condensed",sans-serif';c.textAlign='center';c.fillText('COBERTO',128,120);c.font='16px "Barlow Condensed",sans-serif';c.fillText('treino de ouvido',128,145);g.tex.needsUpdate=true;});}
+  else{
+  drawGauge(V.gTach.ctx,GCFG.tach,rpmD+shake);V.gTach.tex.needsUpdate=true;
+  drawGauge(V.gEgt.ctx,GCFG.egt,egtD,peak||null);V.gEgt.tex.needsUpdate=true;
+  drawGauge(V.gFf.ctx,GCFG.ff,ffD);V.gFf.tex.needsUpdate=true;}
+  knobsUpdate();V.renderer.render(V.scene,cam);
+}
+function hitKnob(e){
+  const r=$('#view').getBoundingClientRect();
+  V.mouse.set(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1);
+  V.ray.setFromCamera(V.mouse,V.camera);
+  const hits=V.ray.intersectObjects(V.panel.children,true);
+  for(const h of hits){if(h.object.userData.knob)return h.object.userData.knob;}
+  return null;
+}
+function setThr(v){thrPull=Math.max(0,Math.min(1,v));}
+function setMix(v,twist){const o=mixPull;mixPull=Math.max(0,Math.min(1,v));if(twist)vern+=(mixPull-o)*40;}
+function bindPointer(canvas){
+  let drag=null,sy=0,sx=0,sp=0,oy=0,op=0;
+  canvas.addEventListener('pointerdown',e=>{
+    canvas.setPointerCapture(e.pointerId);audioKick();
+    const k=hitKnob(e);sx=e.clientX;sy=e.clientY;
+    if(k){drag=k;sp=k==='thr'?thrPull:mixPull;canvas.style.cursor='grabbing';}
+    else{drag='orbit';oy=V.orbit.yaw;op=V.orbit.pitch;}
+  });
+  canvas.addEventListener('pointermove',e=>{
+    if(!drag){canvas.style.cursor=hitKnob(e)?'grab':'move';return;}
+    const dy=e.clientY-sy,dx=e.clientX-sx;
+    if(drag==='thr')setThr(sp+dy/170);
+    else if(drag==='mix')setMix(sp+dy/170);
+    else{V.orbit.yaw=Math.max(-0.6,Math.min(0.6,oy-dx/400));V.orbit.pitch=Math.max(-0.1,Math.min(0.5,op+dy/400));}
+  });
+  const end=()=>{drag=null;canvas.style.cursor='grab';};
+  canvas.addEventListener('pointerup',end);canvas.addEventListener('pointercancel',end);
+  canvas.addEventListener('wheel',e=>{e.preventDefault();const k=hitKnob(e);const d=Math.sign(e.deltaY);
+    if(k==='mix')setMix(mixPull+d*0.004,true);else if(k==='thr')setThr(thrPull+d*0.01);else V.orbit.dist=Math.max(2.2,Math.min(4.2,V.orbit.dist+d*0.15));},{passive:false});
+}
+document.querySelectorAll('.fine button').forEach(b=>{
+  let iv=null;const d=+b.dataset.d,k=b.dataset.k;
+  const go=()=>{k==='thr'?setThr(thrPull+d):setMix(mixPull+d,true);};
+  b.addEventListener('pointerdown',e=>{e.preventDefault();audioKick();go();clearInterval(iv);iv=setInterval(go,60);});
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>clearInterval(iv)));
+});
+document.addEventListener('keydown',e=>{
+  if($('#game').classList.contains('hidden')||e.target.tagName==='BUTTON')return;
+  const big=e.shiftKey;
+  if(e.key==='w'||e.key==='W')setThr(thrPull-(big?0.05:0.01));
+  if(e.key==='s'||e.key==='S')setThr(thrPull+(big?0.05:0.01));
+  if(e.key==='ArrowUp'){setMix(mixPull-(big?0.05:0.004),true);e.preventDefault();}
+  if(e.key==='ArrowDown'){setMix(mixPull+(big?0.05:0.004),true);e.preventDefault();}
+});
+
+/* ======================= Som: motor e hélice ======================= */
+/* Motor: cada explosão é sintetizada individualmente (4 cilindros, 4 tempos → RPM/30 explosões por segundo).
+   Mistura pobre: cilindros deixam de queimar ao acaso (falhas secas, "tosse"). Mistura rica: explosões mais
+   fracas e irregulares (motor "afogado", borbulhando). O escape ressoa em ~120 Hz e ~380 Hz.
+   Hélice bipá: ruído de ponta de pá (agudo) e sopro (grave) modulados na passagem das pás (RPM/60 × 2),
+   com intensidade ∝ (RPM/2700)³, mais o vento da fuselagem conforme a velocidade da fase. */
+let ac=null,A={},soundOn=false,audT=0;
+const ENG={rpm:0,alive:false,rough:0,R:1,load:0,speed:0};
+function initAudio(){
+  ac=new (window.AudioContext||window.webkitAudioContext)();
+  const master=ac.createGain();master.gain.value=0;
+  const cab=ac.createBiquadFilter();cab.type='lowpass';cab.frequency.value=3800;cab.Q.value=0.4;
+  master.connect(cab).connect(ac.destination);A.master=master;
+  const sr=ac.sampleRate;
+  // ---- motor
+  const sp=ac.createScriptProcessor(2048,1,1);let next=0,cyl=0;const pulses=[];
+  sp.onaudioprocess=e=>{
+    const out=e.outputBuffer.getChannelData(0);
+    const f=Math.max(0.5,ENG.rpm/30),period=sr/f,load=ENG.load;
+    const lean=ENG.R<0.76,rich=ENG.R>1.15;
+    const pMiss=lean?Math.min(0.55,(0.76-ENG.R)*3.5):rich?Math.min(0.3,(ENG.R-1.15)*0.9):0;
+    for(let i=0;i<out.length;i++){
+      if(--next<=0&&ENG.alive){
+        let amp=0.45+0.55*load,jit=0.02;
+        if(Math.random()<pMiss)amp*=rich?0.4:0.06;
+        if(rich){amp*=0.85;jit=0.07;}
+        amp*=1+(cyl%2?0.05:-0.05)+(Math.random()-0.5)*0.08;
+        pulses.push({age:0,amp,fn:65+load*45+Math.random()*8,tn:0.010+0.006*load,tt:0.018+0.012*load});
+        cyl=(cyl+1)%4;next=period*(1+(Math.random()-0.5)*(jit+0.12*ENG.rough));
+      }
+      let v=0;
+      for(let j=pulses.length-1;j>=0;j--){const p=pulses[j],tt=p.age/sr;
+        v+=p.amp*(0.9*Math.sin(6.2832*p.fn*tt)*Math.exp(-tt/p.tt)+0.5*(Math.random()*2-1)*Math.exp(-tt/p.tn));
+        if(++p.age/sr>0.09)pulses.splice(j,1);}
+      out[i]=v*0.45;
+    }
+  };
+  const sil=ac.createGain();sil.gain.value=0;sil.connect(sp);     /* entrada muda só para manter o processador ativo */
+  const ex1=ac.createBiquadFilter();ex1.type='bandpass';ex1.frequency.value=120;ex1.Q.value=2.2;
+  const ex2=ac.createBiquadFilter();ex2.type='bandpass';ex2.frequency.value=380;ex2.Q.value=1.6;
+  const exLP=ac.createBiquadFilter();exLP.type='lowpass';exLP.frequency.value=1400;exLP.Q.value=0.7;
+  const g1=ac.createGain();g1.gain.value=1.2;const g2=ac.createGain();g2.gain.value=0.6;const g3=ac.createGain();g3.gain.value=0.5;
+  const eG=ac.createGain();eG.gain.value=0;
+  sp.connect(ex1).connect(g1).connect(eG);sp.connect(ex2).connect(g2).connect(eG);sp.connect(exLP).connect(g3).connect(eG);
+  eG.connect(master);
+  // ---- hélice
+  const buf=ac.createBuffer(1,sr*2,sr),d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+  const src=()=>{const n=ac.createBufferSource();n.buffer=buf;n.loop=true;n.playbackRate.value=0.8+Math.random()*0.4;n.start();return n;};
+  const hiBP=ac.createBiquadFilter();hiBP.type='bandpass';hiBP.frequency.value=2600;hiBP.Q.value=0.5;
+  const loBP=ac.createBiquadFilter();loBP.type='bandpass';loBP.frequency.value=170;loBP.Q.value=0.9;
+  const amHi=ac.createGain();amHi.gain.value=0.5;const amLo=ac.createGain();amLo.gain.value=0.5;
+  const lfo=ac.createOscillator();lfo.type='sine';const lfoG=ac.createGain();lfoG.gain.value=0.5;lfo.connect(lfoG);lfoG.connect(amHi.gain);lfoG.connect(amLo.gain);lfo.start();
+  const pG=ac.createGain();pG.gain.value=0;
+  src().connect(hiBP).connect(amHi).connect(pG);src().connect(loBP).connect(amLo).connect(pG);pG.connect(master);
+  const t1=ac.createOscillator();t1.type='triangle';const t1g=ac.createGain();t1g.gain.value=0;t1.connect(t1g).connect(master);t1.start();
+  const t2=ac.createOscillator();t2.type='sine';const t2g=ac.createGain();t2g.gain.value=0;t2.connect(t2g).connect(master);t2.start();
+  // ---- vento da fuselagem
+  const wBP=ac.createBiquadFilter();wBP.type='bandpass';wBP.frequency.value=650;wBP.Q.value=0.25;const wG=ac.createGain();wG.gain.value=0;
+  src().connect(wBP).connect(wG).connect(master);
+  Object.assign(A,{eG,exLP,lfo,hiBP,pG,t1,t1g,t2,t2g,wG});
+}
+function audioKick(){if(soundOn&&ac&&ac.state!=='running')ac.resume();}
+const PHSPEED={dec:0.15,sub:0.55,cru:1,des:1.1,pou:0.5};
+function updAudio(s,rpm){
+  if(!ac||!soundOn)return;
+  const n=ac.currentTime,r=Math.max(0,rpm);
+  Object.assign(ENG,{rpm:r,alive:s.alive,rough:s.rough,R:s.R,load:Math.min(1,s.pct),speed:PHSPEED[PH[pi].key]});
+  A.eG.gain.setTargetAtTime(s.alive?0.5+0.3*Math.min(1,s.pct):0,n,0.05);
+  A.exLP.frequency.setTargetAtTime(900+1400*Math.min(1,s.pct),n,0.1);
+  const bpf=r/30,pv=Math.pow(r/2700,3);
+  A.lfo.frequency.setTargetAtTime(Math.max(0.1,bpf),n,0.05);
+  A.hiBP.frequency.setTargetAtTime(1500+r*0.6,n,0.1);
+  A.pG.gain.setTargetAtTime(0.03+0.5*pv*(r>50?1:0),n,0.08);
+  A.t1.frequency.setTargetAtTime(Math.max(20,bpf),n,0.05);A.t1g.gain.setTargetAtTime(0.035*pv,n,0.08);
+  A.t2.frequency.setTargetAtTime(Math.max(20,bpf*2),n,0.05);A.t2g.gain.setTargetAtTime(0.02*pv,n,0.08);
+  A.wG.gain.setTargetAtTime(0.09*ENG.speed,n,0.3);
+}
+
+/* ======================= Interface ======================= */
+function renderPicker(){
+  const groups=[...new Set(SCN.map(s=>s.g))];
+  $('#pickList').innerHTML=groups.map(gname=>`<h3>${gname}</h3><div class="pick">`+SCN.map((s,i)=>s.g!==gname?'':`<button class="sc" data-i="${i}"><b>${s.title}</b><span>${s.random?'Sorteado':`${AP[s.from].icao} ${AP[s.from].name} (${fmt(AP[s.from].elev)} ft) → ${AP[s.to].icao} ${AP[s.to].name} (${fmt(AP[s.to].elev)} ft), FL${String(s.fl).padStart(3,'0')}`}<br>${s.desc}</span></button>`).join('')+'</div>').join('');
+  document.querySelectorAll('.sc').forEach(b=>b.onclick=()=>startScenario(+b.dataset.i));
+}
+function startScenario(i){
+  sc=SCN[i].random?randomScenario():SCN[i];pi=0;scores=[];thrPull=1;mixPull=0;vern=0;rpmD=0;
+  $('#picker').classList.add('hidden');$('#game').classList.remove('hidden');
+  resize3D();startPhase();
+}
+function startPhase(){
+  cond=buildCond();confirmed=false;peak=0;
+  const ph=PH[pi],c=cond,hpa=Math.round(c.set*33.8639);
+  $('#phList').innerHTML=PH.map((p,j)=>`<li class="${j<pi?'done':j===pi?'cur':''}">${p.name}</li>`).join('');
+  $('#routeTitle').textContent=`${AP[sc.from].name} → ${AP[sc.to].name}`;
+  $('#metar').textContent=c.metar;
+  const above=c.PA>3000;
+  $('#wx').innerHTML=`
+   <div><b>${fmt(c.alt)} ft</b><span>${fmt(c.alt*0.3048)} m. ${c.altLabel}</span></div>
+   <div><b>${inhg(c.set)} inHg</b><span>${hpa} hPa no altímetro</span></div>
+   <div><b>${c.oat} °C</b><span>Temperatura (ISA ${fmt(c.isa,0)} °C, ${c.oat-Math.round(c.isa)>=0?'+':''}${c.oat-Math.round(c.isa)})</span></div>
+   <div><b>${c.td} °C</b><span>Ponto de orvalho, UR ${fmt(c.RH)}%</span></div>
+   <div class="${above?'hi':''}"><b>${fmt(r10(c.PA))} ft</b><span>Altitude-pressão, ${above?'acima':'abaixo'} de 3.000 ft</span></div>
+   <div><b>${fmt(r10(c.DA))} ft</b><span>Altitude-densidade (${fmt(c.DA*0.3048)} m)</span></div>`;
+  const corr=paCorr(c.set);
+  $('#paBox').innerHTML=`<b>Como a altitude-pressão foi obtida</b><br>
+   <code>PA = altitude indicada + correção do QNH</code><br>
+   Altímetro em ${inhg(c.set)} inHg (${hpa} hPa). Regra prática: (29,92 − ${inhg(c.set)}) × 1.000 = <b>${c.paRule>=0?'+':''}${fmt(c.paRule)} ft</b>; pela atmosfera padrão a correção exata é <b>${corr>=0?'+':''}${fmt(corr)} ft</b> (ou ≈ 27 ft por hPa: ${1013-hpa>=0?'+':''}${fmt((1013.25-hpa)*27)} ft).<br>
+   PA = ${fmt(c.alt)} ${corr>=0?'+':'−'} ${fmt(Math.abs(corr))} = <b>${fmt(r10(c.PA))} ft</b>. O POH do C172S usa esse valor, e não a altitude-densidade, para decidir se empobrece na decolagem e na subida (limite: 3.000 ft).<br>
+   A altitude-densidade (${fmt(r10(c.DA))} ft) sai da pressão real, da temperatura e do vapor d'água, e é o que determina o desempenho: a cada 1 °C acima da ISA, cerca de +120 ft.`;
+  $('#phName').textContent=ph.name;$('#phTask').textContent=ph.task;$('#phAtt').textContent=ph.att;$('#phSpd').textContent=ph.spd;
+  $('#poh').innerHTML=ph.poh+' <span class="muted">(Resumo para treino. Consulte sempre o POH oficial da sua aeronave.)</span>';
+  $('#fb').classList.add('hidden');
+  $('#bConfirm').textContent='Confirmar ajuste';$('#bConfirm').disabled=false;
+}
+function zone(s){
+  if(!s.alive)return ['bad','Motor parado: mistura em corte (IDLE CUT OFF)'];
+  if(s.rpm>2700)return ['bad','Acima de 2.700 RPM: linha vermelha, reduza a manete'];
+  if(s.det)return ['bad','Potência alta com mistura pobre: risco de detonação'];
+  if(s.R<0.72)return ['bad','Motor áspero: mistura pobre demais, falhas de combustão'];
+  if(s.R<0.763)return ['warn','Lado pobre do pico de EGT: potência caindo'];
+  if(s.R<=0.785)return ['warn','No pico de EGT'];
+  if(s.R<0.84)return ['ok','Rico do pico: faixa de cruzeiro econômico (≈ '+Math.round(s.rop)+' °F ROP)'];
+  if(s.R<=0.92)return ['ok','Melhor potência: RPM máxima para essa manete'];
+  if(s.R<=1.2)return ['warn','Rico: combustível sobrando (resfria, mas perde potência e autonomia)'];
+  return ['bad','Muito rico: fumaça preta, motor "afogado", RPM caindo'];
+}
+let stT=0,last=performance.now();
+function loop(now){
+  const dt=Math.min(0.1,(now-last)/1000);last=now;
+  if(cond&&!$('#game').classList.contains('hidden')){
+    const ph=PH[pi],s=eng(cond,tVal(),mixPull,ph);
+    rpmD+=(s.rpm-rpmD)*Math.min(1,dt/0.45);egtD+=(s.egt-egtD)*Math.min(1,dt/1.1);ffD+=(s.ff-ffD)*Math.min(1,dt/0.3);
+    const shake=s.rough*(Math.random()-0.5)*90;
+    if(s.alive&&Math.abs(egtD-s.egt)<8&&egtD>peak)peak=egtD;
+    render3D(s,shake);
+    if(now-stT>140){
+      stT=now;
+      const cov=blind&&!confirmed;
+      $('#digs').innerHTML=instr&&!cov?`<span>${fmt(r10(rpmD))} RPM</span><span>EGT ${fmt(egtD)} °F${peak?' (pico '+fmt(peak)+')':''}</span><span>${fmt(ffD,1)} gal/h</span><span>CHT est. ${fmt(s.cht)} °F</span>`:'';
+      let extra='';
+      if(ph.key==='sub')extra=`<span><em>Razão de subida</em> ${fmt(roc(s,cond,ph))} ft/min</span>`;
+      if(ph.key==='cru')extra=`<span><em>TAS</em> ${fmt(tas(s,cond))} kt</span><span><em>Autonomia</em> ${s.ff?fmt(53/s.ff,1):'—'} h</span>`;
+      $('#strip').innerHTML=cov?'':`<span><em>Potência</em> ${fmt(s.pct*100)}% de 180 hp</span>${extra}`;
+      if(cov){$('#status').className='status';$('#status').textContent='Instrumentos cobertos: ajuste pelo som. Ao confirmar, eles são revelados.';}
+      else if(instr){const [cl,tx]=zone(s);$('#status').className='status '+cl;$('#status').textContent=tx;}
+      else{$('#status').className='status';$('#status').textContent=s.alive?(s.rough>0.15?'Vibração no motor':'Motor estável'):'Motor parado';}
+    }
+    if(now-audT>40){audT=now;updAudio(s,rpmD+shake*0.3);}
+  }
+  requestAnimationFrame(loop);
+}
+
+/* ======================= Avaliação (POH C172S) ======================= */
+function evaluate(){
+  const c=cond,ph=PH[pi],t=tVal(),s=eng(c,t,mixPull,ph);
+  const items=[];let score=100;
+  const add=(type,title,detail,pen=0)=>{items.push({type,title,detail});score-=pen;};
+  const leanPull=Math.max(0,1-0.875*Math.sqrt(c.sO2));
+  const PAok=c.PA<=3000,PAtxt=fmt(r10(c.PA))+' ft';
+  if(ph.key==='dec'||ph.key==='sub'){
+    const corr=PAok?eng(c,1,0,ph):eng(c,1,leanPull,ph);
+    if(!s.alive){add('bad','O motor apagou',ph.key==='dec'?'A mistura cortou o motor. Na corrida, abortar (manete IDLE, freios). Logo após sair do chão, é pane de motor a baixa altura: pouso em frente.':'Pane de motor em subida: nariz para baixo, planeio a 68 KIAS e escolher área de pouso.',100);return {score:0,items};}
+    if(t<0.97){
+      const dist=Math.round(((corr.HP/s.HP)**2-1)*100);
+      add('bad','A manete não está toda à frente',ph.key==='dec'?`Só ${fmt(s.pct*100)}% de potência. A corrida de decolagem fica cerca de ${fmt(dist)}% maior e a subida inicial mais fraca. POH: Throttle FULL.`:`Razão de subida de ~${fmt(roc(s,c,ph))} ft/min, contra ~${fmt(roc(corr,c,ph))} ft/min da tabela do POH. POH (Enroute Climb): Throttle FULL.`,35);
+    } else add('ok','Manete FULL: potência máxima contínua',`No IO-360-L2A a potência máxima contínua é 180 hp a 2.700 RPM, sem limite de tempo. ${ph.key==='dec'?`RPM estática: ${fmt(r10(s.rpm))}.`:`Razão de subida: ~${fmt(roc(s,c,ph))} ft/min (tabela do POH para esta altitude e temperatura: ${fmt(climbT(c.PA,c.oat))}).`}`);
+    const dR=s.R-0.875;
+    if(PAok){
+      if(s.m>=0.97)add('ok',`Mistura FULL RICH correta (altitude-pressão ${PAtxt}, até 3.000 ft)`,'O combustível extra resfria os cilindros em potência máxima e protege contra detonação.');
+      else if(s.R>=0.84)add('warn','Mistura empobrecida com altitude-pressão abaixo de 3.000 ft',`Você perde o enriquecimento de resfriamento em potência máxima: a CHT sobe (est. ${fmt(s.cht)} °F) e a margem contra detonação diminui. POH: FULL RICH.`,30);
+      else add('bad','Mistura pobre em potência máxima e ar denso',`Detonação provável, com CHT est. ${fmt(s.cht)} °F (limite 500 °F) e risco de dano a pistões e válvulas. POH: FULL RICH até 3.000 ft de altitude-pressão.`,60);
+      if(c.DA>3000&&s.m>=0.97)add('info','Altitude-densidade alta, mas o critério do POH é a altitude-pressão',`Altitude-densidade de ${fmt(r10(c.DA))} ft: o desempenho cai mesmo com o ajuste correto. Corrida e subida ficam mais longas.`);
+    } else {
+      const lossR=Math.round(corr.rpm-s.rpm),lossHP=Math.round((1-s.HP/corr.HP)*100);
+      if(Math.abs(dR)<=0.045)add('ok',`Empobrecida para RPM máxima (altitude-pressão ${PAtxt})`,`RPM de ${fmt(r10(s.rpm))}, praticamente o máximo possível (${fmt(r10(corr.rpm))}). É o procedimento do POH acima de 3.000 ft.`);
+      else if(dR>0){
+        const pen=dR>0.12?45:25,conseq=ph.key==='dec'?`corrida ~${fmt(Math.round(((corr.HP/s.HP)**2-1)*100))}% maior`:`subida de ~${fmt(roc(s,c,ph))} ft/min em vez de ~${fmt(roc(corr,c,ph))}`;
+        add(dR>0.12?'bad':'warn',s.m>=0.97?'FULL RICH com altitude-pressão acima de 3.000 ft':'Ainda rica demais para a altitude',`O ar rarefeito traz menos oxigênio e a vazão de combustível não cai na mesma proporção. Perdem-se ${fmt(lossR)} RPM (${fmt(lossHP)}% de potência): ${conseq}. As velas podem carbonizar. Empobreça até a RPM parar de subir.`,pen);
+      } else if(s.R<0.72)add('bad','Pobre demais: motor áspero e falhando','Potência caindo e risco real de o motor parar em fase crítica. Enriqueça imediatamente.',70);
+      else add('bad','Passou do ponto de RPM máxima, para o lado pobre',`Em potência máxima isso eleva a CHT (est. ${fmt(s.cht)} °F) e arrisca detonação. Enriqueça até voltar ao ponto de RPM máxima.`,40);
+    }
+    if(ph.key==='dec'){
+      const rb=roc(corr,c,ph),to=takeoffT(c.PA,c.oat),df=Math.max(1,(corr.HP/Math.max(1,s.HP))**2);
+      add(df>1.03?'warn':'info','Distância de decolagem pelo POH (pista curta, flaps 10°, 2.550 lb, sem vento)',`Com o ajuste correto: corrida de ${fmt(to.roll)} ft (${fmt(to.roll*0.3048)} m) e ${fmt(to.fifty)} ft para livrar 50 ft.${df>1.03?` Com a sua potência, estimo ~${fmt(to.roll*df)} ft de corrida (+${fmt((df-1)*100)}%).`:''}${c.oat<0||c.oat>40||c.PA>8000?' Fora da faixa da tabela: valor extrapolado.':''}`);
+      if(rb<300)add(rb<80?'bad':'warn',rb<80?'Decolagem inviável para o C172S nessas condições':'Decolagem marginal mesmo com o ajuste perfeito',`Com o motor bem ajustado a razão de subida seria de apenas ~${fmt(Math.max(0,rb))} ft/min (altitude-densidade ${fmt(r10(c.DA))} ft; teto de serviço 14.000 ft). Isso não é erro de mistura: é limite da aeronave. Reduza peso, espere esfriar ou não decole.`);
+      if(c.storm)add('info','Trovoada (TS/CB) no METAR','Mistura e manete corretas não resolvem tesouras de vento, rajadas e granizo. Em VFR, o certo é avaliar não decolar ou esperar a célula passar.');
+      if(c.RH>70)add('info',`Umidade relativa de ${fmt(c.RH)}%`,`O vapor d'água desloca oxigênio: a altitude-densidade sobe ~${fmt(Math.max(0,r10(c.DA-c.DAdry)))} ft em relação ao ar seco e a mistura fica um pouco mais rica.`);
+      if(c.oat<=-20)add('info','Ar muito frio e denso','Há mais oxigênio por ciclo: o motor rende mais que o nominal e a mistura FULL RICH fica relativamente menos rica. Aqueça bem o motor antes de aplicar potência máxima.');
+      if(c.PA<0)add('info','Altitude-pressão negativa',`O altímetro em 29,92 marcaria ${fmt(r10(c.PA))} ft: pressão acima da padrão. Para o POH, vale a regra de até 3.000 ft: FULL RICH.`);
+    }
+  }
+  if(ph.key==='cru'){
+    if(!s.alive){add('bad','O motor apagou em cruzeiro','Pane em voo: planeio a 68 KIAS, checklist de reacionamento. A causa foi puxar a mistura até o corte.',100);return {score:0,items};}
+    const p=s.pct,full=eng(c,1,leanPull,ph);
+    if(s.rpm>2700)add('bad',`${fmt(r10(s.rpm))} RPM: acima da linha vermelha`,'Em voo nivelado a hélice de passo fixo gira mais rápido que no solo. Exceder 2.700 RPM é exceder o limite do motor e da hélice. Reduza a manete.',40);
+    else if(p>0.755)add('warn',`Potência de ${fmt(p*100)}%, acima de 75%`,'O POH recomenda não exceder 75% em cruzeiro. Acima disso, a mistura deve ficar em melhor potência, nunca no pico de EGT.',15);
+    else if(p<0.45&&full.pct>0.55)add('warn',`Potência baixa (${fmt(p*100)}%)`,`TAS de só ~${fmt(tas(s,c))} kt. O voo fica lento e longo. O cruzeiro usual fica entre 55% e 75%.`,10);
+    else if(s.rpm<2100)add('warn',`${fmt(r10(s.rpm))} RPM, abaixo do arco verde`,'O POH prevê cruzeiro entre 2.100 e 2.700 RPM.',10);
+    else add('ok',`Potência de cruzeiro: ${fmt(p*100)}% a ${fmt(r10(s.rpm))} RPM`,`Dentro do arco verde e abaixo de 75%. TAS de ~${fmt(tas(s,c))} kt.${full.pct<0.75?' Nesta altitude nem a manete toda à frente passa de 75%.':''}`);
+    const rec=eng(c,t,Math.max(0,1-0.82*Math.sqrt(c.sO2)),ph),endu=53/s.ff,enduR=53/rec.ff;
+    if(p>0.755){
+      if(Math.abs(s.R-0.875)<=0.045)add('ok','Mistura em melhor potência','Correto para potência acima de 75%.');
+      else if(s.R<0.83)add('bad','Mistura pobre com potência acima de 75%',`Risco de detonação e CHT alta (est. ${fmt(s.cht)} °F). Enriqueça para melhor potência ou reduza para 75% ou menos.`,40);
+      else add('warn','Mistura rica demais',`Consumo de ${fmt(s.ff,1)} gal/h. Empobreça para melhor potência.`,20);
+    } else {
+      const rop=s.rop;
+      if(rop>=25&&rop<=80)add('ok',`Recommended Lean: ~${fmt(rop)} °F rico do pico`,`É o ajuste do POH. Consumo de ${fmt(s.ff,1)} gal/h, autonomia de ~${fmt(endu,1)} h com 53 gal utilizáveis.`);
+      else if(rop>=0&&rop<25)add('ok',`Perto do pico de EGT: Best Economy (~${fmt(rop)} °F ROP)`,`Permitido até 75%. Menor consumo (${fmt(s.ff,1)} gal/h), com um pouco menos de velocidade.`,5);
+      else if(rop>80&&rop<=180)add('warn','Mistura rica demais para cruzeiro',`${fmt(s.ff,1)} gal/h contra ${fmt(rec.ff,1)} recomendados (+${fmt((s.ff/rec.ff-1)*100)}%). Autonomia ~${fmt(enduR-endu,1)} h menor, com depósito de chumbo nas velas.`,25);
+      else if(rop>180)add('bad','Mistura em FULL RICH (ou quase) no cruzeiro',`${fmt(s.ff,1)} gal/h contra ${fmt(rec.ff,1)} recomendados: autonomia ~${fmt(enduR-endu,1)} h menor. Fumaça preta, velas carbonizadas e motor perdendo RPM. Empobreça até o pico e enriqueça 50 °F.`,45);
+      else if(s.R>=0.72)add('warn','Lado pobre do pico (LOP)','Não está previsto no POH do C172S. A potência cai e o motor tende a ficar áspero. Enriqueça para ~50 °F rico do pico.',25);
+      else add('bad','Pobre demais: motor falhando','Vibração forte e perda de potência, à beira do apagamento. Enriqueça já.',60);
+    }
+  }
+  if(ph.key==='des'){
+    if(!s.alive){add('bad','O motor apagou na descida','Ao descer o ar fica mais denso e a mistura do cruzeiro fica pobre até cortar. Era preciso enriquecer progressivamente.',100);return {score:0,items};}
+    if(s.rpm>2700)add('bad',`${fmt(r10(s.rpm))} RPM: sobrevelocidade`,'Na descida a velocidade faz a hélice de passo fixo girar mais rápido. Reduza a manete para ficar abaixo de 2.700 RPM.',40);
+    else if(s.rpm>2500)add('warn','RPM alta para descida','A velocidade vai subindo em direção à VNO (129 KIAS). Reduza um pouco a manete.',10);
+    else if(s.rpm<1500)add('warn','Potência muito reduzida','O motor esfria rápido e a razão de descida aumenta. Uma redução gradual é melhor para os cilindros.',10);
+    else add('ok',`Potência de descida: ${fmt(r10(s.rpm))} RPM`,'Descida controlada, com motor aquecido.');
+    if(s.R<0.72)add('bad','Mistura pobre demais: motor áspero','Você desceu sem enriquecer: o ar mais denso empobreceu a mistura. O motor falha e pode parar.',55);
+    else if(s.R<0.8)add('warn','A mistura ficou pobre durante a descida','Conforme desce, a mesma posição do knob fica mais pobre. POH: ajustar para funcionamento suave, enriquecendo ao descer.',25);
+    else if(s.R<=1.15)add('ok','Mistura ajustada para funcionamento suave','Conforme o POH: enriquecer progressivamente durante a descida.');
+    else add('warn','Rica demais','Funciona, mas desperdiça combustível e suja as velas em potência reduzida.',10);
+  }
+  if(ph.key==='pou'){
+    if(!s.alive){add('bad','O motor apagou na final','Sem potência para corrigir a rampa ou arremeter. Mistura no corte em aproximação é um erro crítico.',100);return {score:0,items};}
+    if(s.m>=0.97)add('ok','Mistura RICH (checklist Before Landing)','Se precisar arremeter (Throttle FULL), o motor entrega a potência com proteção de resfriamento.');
+    else{const ga=eng(c,1,mixPull,ph);add('bad','A mistura não está RICH na final',`Numa arremetida com manete FULL essa mistura dá R = ${ga.R.toFixed(2).replace('.',',')}${ga.R<0.84?': risco de detonação ou falha justo na hora crítica':', com menos margem de resfriamento'}. POH: Mixture RICH antes do pouso.`,45);}
+    if(c.PA>3000&&s.m>=0.97)add('info','Pista alta: a arremetida exigirá empobrecer',`Com altitude-pressão de ${PAtxt}, ao aplicar potência máxima na arremetida vale a mesma regra da decolagem: empobrecer para RPM máxima assim que a subida estiver estabilizada.`);
+    if(s.rpm>1900)add('warn',`Potência alta (${fmt(r10(s.rpm))} RPM)`,'A aproximação fica rápida ou alta, com flutuação no arredondamento e pouso longo.',15);
+    else if(s.rpm<1100)add('warn','Potência muito baixa','Afundamento na final e risco de pousar antes da pista. Ajuste a potência para manter 60–70 KIAS na rampa.',15);
+    else add('ok',`Potência de aproximação: ${fmt(r10(s.rpm))} RPM`,'Compatível com 60–70 KIAS e flaps FULL numa rampa de ~3°.');
+  }
+  return {score:Math.max(0,Math.min(100,Math.round(score))),items};
+}
+$('#bConfirm').onclick=()=>{
+  if(confirmed){if(pi<PH.length-1){pi++;startPhase();}else showSummary();return;}
+  confirmed=true;const r=evaluate();scores[pi]=r.score;const fb=$('#fb');
+  fb.innerHTML=`<div class="fbhead"><h2>${PH[pi].name}: resultado</h2><div class="score">${r.score}</div></div><ul>${r.items.map(i=>`<li class="${i.type}"><b>${i.title}</b>${i.detail}</li>`).join('')}</ul><p class="muted" style="margin:6px 0 0;font-size:.85rem">Os comandos continuam onde estão. Mexa neles agora para ver e ouvir o efeito.</p>`;
+  fb.classList.remove('hidden');
+  $('#bConfirm').textContent=pi<PH.length-1?`Próxima fase: ${PH[pi+1].name}`:'Ver resultado do voo';
+  if(window.innerWidth<940)fb.scrollIntoView({behavior:'smooth',block:'start'});
+};
+function showSummary(){
+  const tot=Math.round(scores.reduce((a,b)=>a+b,0)/PH.length);
+  const msg=tot>=90?'Excelente: ajuste de motor de acordo com o POH.':tot>=70?'Bom voo. Revise as fases com alerta.':tot>=50?'Voo concluído, mas o motor sofreu. Revise o checklist.':'Revise os procedimentos do POH antes do próximo voo.';
+  const fb=$('#fb');
+  fb.innerHTML=`<div class="fbhead"><h2>Voo concluído</h2><div class="score">${tot}</div></div><p style="margin:4px 0">${msg}</p><table class="sum">${PH.map((p,i)=>`<tr><td>${p.name}</td><td>${scores[i]??0}</td></tr>`).join('')}</table><div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn primary" id="bAgain">Repetir cenário</button><button class="btn" id="bOther">Outro cenário</button></div>`;
+  fb.classList.remove('hidden');$('#bConfirm').disabled=true;
+  $('#bAgain').onclick=()=>{pi=0;scores=[];thrPull=1;mixPull=0;startPhase();};
+  $('#bOther').onclick=openMenu;
+}
+function openMenu(){$('#game').classList.add('hidden');$('#picker').classList.remove('hidden');}
+$('#bMenu').onclick=openMenu;
+$('#bPoh').onclick=()=>{const p=$('#poh');p.classList.toggle('show');$('#bPoh').textContent=p.classList.contains('show')?'Ocultar checklist do POH':'Ver checklist do POH';};
+$('#bBlind').onclick=()=>{blind=!blind;$('#bBlind').classList.toggle('on',blind);$('#bBlind').setAttribute('aria-pressed',blind);if(blind&&!soundOn)$('#bSound').click();};
+$('#bAbout').onclick=()=>$('#about').classList.toggle('hidden');
+$('#bInstr').onclick=()=>{instr=!instr;$('#bInstr').classList.toggle('on',instr);$('#bInstr').setAttribute('aria-pressed',instr);};
+$('#bSound').onclick=()=>{if(!ac)initAudio();soundOn=!soundOn;ac.resume();A.master.gain.setTargetAtTime(soundOn?0.55:0,ac.currentTime,0.08);$('#bSound').textContent=soundOn?'Desligar som':'Ligar som';$('#bSound').classList.toggle('on',soundOn);$('#bSound').setAttribute('aria-pressed',soundOn);};
+
+function boot(){
+  if(typeof THREE==='undefined'){setTimeout(boot,200);return;}
+  try{setup3D();}catch(e){$('#view').replaceWith(Object.assign(document.createElement('p'),{textContent:'Seu navegador não conseguiu iniciar o painel 3D (WebGL). Tente outro navegador.',className:'status bad'}));}
+  renderPicker();requestAnimationFrame(loop);
+}
+boot();
+</script>
+</body>
+</html>
